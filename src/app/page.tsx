@@ -44,9 +44,9 @@ export default function Sm1l3Page() {
         const reader = new FileReader();
         reader.onload = (readEvent) => {
           const dataUrl = readEvent.target?.result as string;
-          const imageName = file.name.replace(/\.[^/.]+$/, ".webp");
-          const markdownImage = `![${imageName}](${dataUrl})`;
-          
+          // Use a generic name, export will handle renaming
+          const markdownImage = `![${file.name}](${dataUrl})`;
+
           setContent(prev => {
             const textarea = textareaRef.current;
             if (textarea) {
@@ -67,13 +67,13 @@ export default function Sm1l3Page() {
         reader.readAsDataURL(file);
       });
 
-       toast({
+      toast({
         title: 'Image(s) added',
         description: `Successfully added ${imageFiles.length} image(s) to your post.`,
       });
     }
   };
-
+  
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -119,7 +119,7 @@ export default function Sm1l3Page() {
           >
             {isDragging && (
               <div className="absolute inset-0 bg-primary/20 flex items-center justify-center pointer-events-none z-10 rounded-lg">
-                <p className="text-primary-foreground font-bold text-lg bg-primary px-4 py-2 rounded-md">Drop image here</p>
+                <p className="text-primary-foreground font-bold text-lg bg-primary px-4 py-2 rounded-md">Drop image to add</p>
               </div>
             )}
             <EditorToolbar
