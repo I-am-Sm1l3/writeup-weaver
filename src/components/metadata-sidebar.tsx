@@ -100,26 +100,36 @@ export function MetadataSidebar({
       const originalPath = match[1];
       if (imagePaths.has(originalPath)) continue;
 
-      const imageInfo = PlaceHolderImages.find(p => originalPath.includes(p.id));
       let imageUrl = originalPath;
-      if (imageInfo) {
-        imageUrl = imageInfo.imageUrl;
+      let isDataUrl = false;
+      
+      if (imageUrl.startsWith('data:image')) {
+        isDataUrl = true;
+      } else {
+        const imageInfo = PlaceHolderImages.find(p => originalPath.includes(p.id));
+        if (imageInfo) {
+            imageUrl = imageInfo.imageUrl;
+        }
       }
-
+      
       let extension = 'webp';
-      try {
-        const url = new URL(imageUrl);
-        const pathname = url.pathname;
-        const ext = pathname.split('.').pop();
-        if (ext) {
-          extension = ext.split('?')[0]; // Handle query params
-        }
-      } catch (e) {
-        // Handle relative paths like `image-1.webp`
-        const ext = imageUrl.split('.').pop();
-        if (ext && ext.length < 5) { // Basic check for valid extension
-            extension = ext;
-        }
+      if (isDataUrl) {
+          const mimeType = imageUrl.match(/data:image\/([^;]+);/)?.[1] ?? 'webp';
+          extension = mimeType;
+      } else {
+          try {
+            const url = new URL(imageUrl);
+            const pathname = url.pathname;
+            const ext = pathname.split('.').pop();
+            if (ext) {
+              extension = ext.split('?')[0]; // Handle query params
+            }
+          } catch (e) {
+            const ext = imageUrl.split('.').pop();
+            if (ext && ext.length < 5) {
+                extension = ext;
+            }
+          }
       }
       
       const newImageName = `${imageCounter}.${extension}`;
@@ -129,30 +139,26 @@ export function MetadataSidebar({
       
       imageCounter++;
       
-      const isRelativePlaceholder = PlaceHolderImages.some(p => originalPath.includes(p.id));
-
-      if (isRelativePlaceholder || !imageUrl.startsWith('http')) {
-        const placeholder = PlaceHolderImages.find(p => p.id === originalPath);
-        if(!placeholder) continue;
-        imageUrl = placeholder.imageUrl;
-      }
+      const fetchPromise = isDataUrl
+        ? Promise.resolve(fetch(imageUrl).then(res => res.blob()))
+        : fetch(imageUrl)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to fetch image: ${response.statusText}`);
+              }
+              return response.blob();
+            });
 
       imagePromises.push(
-        fetch(imageUrl)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Failed to fetch image: ${response.statusText}`);
-            }
-            return response.blob();
-          })
+        fetchPromise
           .then(blob => {
             zip.file(newImagePathInZip, blob);
           })
           .catch(error => {
-            console.error(`Failed to download image ${imageUrl}:`, error);
+            console.error(`Failed to process image ${originalPath}:`, error);
             toast({
-              title: 'Image Download Failed',
-              description: `Could not download ${originalPath}.`,
+              title: 'Image Processing Failed',
+              description: `Could not process ${originalPath}.`,
               variant: 'destructive',
             });
           })
@@ -170,8 +176,8 @@ layout: post
 title: "${title.replace(/"/g, '\\"')}"
 date: ${format(creationDate, 'yyyy-MM-dd HH:mm:ss xx')}
 author: ${author}
-categories: [${categories.split(',').map(c => c.trim()).join(', ')}]
-tags: [${tags.split(',').map(t => t.trim()).join(', ')}]
+categories: [${categories.split(',').map(c => c.trim()).filter(Boolean).join(', ')}]
+tags: [${tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')}]
 img_path: /assets/img/posts/${postSlug}/
 ---
 
