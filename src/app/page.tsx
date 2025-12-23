@@ -14,8 +14,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-
+} from "@/components/ui/accordion";
 
 const initialContent = `## Welcome to Sm1l3's Writeup Weaver
 
@@ -36,7 +35,7 @@ export default function Sm1l3Page() {
   return (
     <div className="flex h-screen max-h-screen w-full flex-col bg-background">
       <Header />
-      <main className="flex flex-1 flex-col gap-4 px-4 pb-4 overflow-hidden">
+      <main className="flex flex-1 flex-col gap-4 p-4">
         <Accordion type="single" collapsible defaultValue="item-1">
             <AccordionItem value="item-1" className="border-b-0">
                 <Card>
@@ -86,13 +85,16 @@ export default function Sm1l3Page() {
               />
             </CardContent>
           </Card>
-          <div className="hidden lg:block overflow-hidden">
-            <Card className="h-full">
+          <Card className="hidden lg:flex flex-col overflow-hidden">
+            <div className="flex items-center gap-1 border-b p-2 flex-wrap h-[53px]">
+              <h3 className="text-sm font-medium text-muted-foreground px-2">Preview Window</h3>
+            </div>
+            <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <MarkdownPreview content={content} />
+                  <MarkdownPreview content={content} />
               </ScrollArea>
-            </Card>
-          </div>
+            </div>
+          </Card>
         </div>
       </main>
     </div>
