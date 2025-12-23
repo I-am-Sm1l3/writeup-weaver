@@ -58,16 +58,20 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
                 />
               );
             }
-            // Fallback for other images (e.g., external URLs)
-            // eslint-disable-next-line @next/next/no-img-element
-            return <img {...props} className="rounded-lg shadow-md my-4" />;
+            
+            // Handle dropped images (data URIs) and external URLs
+            if (props.src) {
+              // eslint-disable-next-line @next/next/no-img-element
+              return <img {...props} src={props.src} alt={props.alt || ''} className="rounded-lg shadow-md my-4 mx-auto" />;
+            }
+            return null;
           },
           h1: ({ node, ...props }) => <h1 className="font-headline text-4xl font-bold mb-4" {...props} />,
           h2: ({ node, ...props }) => <h2 className="font-headline text-3xl font-semibold mt-8 mb-4 border-b pb-2" {...props} />,
           h3: ({ node, ...props }) => <h3 className="font-headline text-2xl font-semibold mt-6 mb-3" {...props} />,
           code: ({ node, inline, className, children, ...props }) => {
             const match = /language-(\S+)/.exec(className || '');
-            const lang = match ? match[1] : '';
+            let lang = match ? match[1] : '';
 
             if (lang.startsWith('file:')) {
               const filePath = lang.split(':')[1];
