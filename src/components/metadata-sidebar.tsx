@@ -17,8 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Download, Loader2 } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import JSZip from 'jszip';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface MetadataSidebarProps {
   title: string;
@@ -84,11 +84,23 @@ export function MetadataSidebar({
   };
 
   const handleExport = async () => {
+    if (!title.trim()) {
+      toast({
+        title: 'Title is missing',
+        description: 'Please provide a title for your post before exporting.',
+        variant: 'destructive',
+      });
+      return;
+    }
+  
     const zip = new JSZip();
     const creationDate = new Date();
-    const postSlug = (title || 'new-post').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    const postSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
     const postFileName = `${format(creationDate, 'yyyy-MM-dd')}-${postSlug}.md`;
     
+    // Create the empty directory for images, so it's always present.
+    zip.folder(`assets/img/posts/${postSlug}`);
+
     let processedContent = content;
     const imageRegex = /!\[.*?\]\((.*?)\)/g;
     const imagePaths = new Map<string, string>();
@@ -100,78 +112,81 @@ export function MetadataSidebar({
       const originalPath = match[1];
       if (imagePaths.has(originalPath)) continue;
 
-      const imageInfo = PlaceHolderImages.find(p => originalPath.includes(p.id));
-      let imageUrl = originalPath;
-      if (imageInfo) {
-        imageUrl = imageInfo.imageUrl;
-      }
+      let fetchPromise: Promise<Blob | null>;
 
-      let extension = 'webp';
-      try {
-        const url = new URL(imageUrl);
-        const pathname = url.pathname;
-        const ext = pathname.split('.').pop();
-        if (ext) {
-          extension = ext.split('?')[0]; // Handle query params
-        }
-      } catch (e) {
-        // Handle relative paths like `image-1.webp`
-        const ext = imageUrl.split('.').pop();
-        if (ext && ext.length < 5) { // Basic check for valid extension
-            extension = ext;
-        }
-      }
-      
-      const newImageName = `${imageCounter}.${extension}`;
-      const newImagePathInMd = newImageName;
-      const newImagePathInZip = `assets/img/posts/${postSlug}/${newImageName}`;
-      imagePaths.set(originalPath, newImagePathInMd);
-      
-      imageCounter++;
-      
-      const isRelativePlaceholder = PlaceHolderImages.some(p => originalPath.includes(p.id));
-
-      if (isRelativePlaceholder || !imageUrl.startsWith('http')) {
-        const placeholder = PlaceHolderImages.find(p => p.id === originalPath);
-        if(!placeholder) continue;
-        imageUrl = placeholder.imageUrl;
-      }
-
-      imagePromises.push(
-        fetch(imageUrl)
+      // Handle both data URIs and external URLs
+      if (originalPath.startsWith('data:') || originalPath.startsWith('http')) {
+         fetchPromise = fetch(originalPath)
           .then(response => {
             if (!response.ok) {
               throw new Error(`Failed to fetch image: ${response.statusText}`);
             }
             return response.blob();
           })
-          .then(blob => {
-            zip.file(newImagePathInZip, blob);
+          .catch(error => {
+            console.error(`Failed to process image ${originalPath}:`, error);
+            // Don't block export for a single failed image, just skip it.
+            toast({
+              title: 'Image Skipped',
+              description: `Could not download image from ${originalPath}. It will be skipped in the export.`,
+              variant: 'destructive',
+            })
+            return null;
+          });
+      } else {
+        const placeholderMatch = originalPath.match(/image-(\d+)\.webp/);
+        const placeholder = placeholderMatch ? PlaceHolderImages.find(p => p.id === `image-${placeholderMatch[1]}.webp`) : null;
+
+        if (!placeholder) {
+          // If it's not a known placeholder, data URI, or http url, skip it.
+          continue;
+        }
+        
+        fetchPromise = fetch(placeholder.imageUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to fetch image: ${response.statusText}`);
+            }
+            return response.blob();
           })
           .catch(error => {
-            console.error(`Failed to download image ${imageUrl}:`, error);
-            toast({
-              title: 'Image Download Failed',
-              description: `Could not download ${originalPath}.`,
-              variant: 'destructive',
-            });
-          })
+            console.error(`Failed to process image ${placeholder.imageUrl}:`, error);
+            return null;
+          });
+      }
+
+      imagePromises.push(
+        fetchPromise.then(blob => {
+          if (blob) {
+            const extension = blob.type.split('/')[1] || 'png';
+            const newImageName = `${imageCounter}.${extension}`;
+            const newImagePathInPost = `/${postSlug}/${newImageName}`;
+            const newImagePathInZip = `assets/img/posts${newImagePathInPost}`;
+            
+            imagePaths.set(originalPath, newImagePathInPost);
+            zip.file(newImagePathInZip, blob);
+            imageCounter++;
+          }
+        })
       );
     }
 
     await Promise.all(imagePromises);
 
     imagePaths.forEach((newPath, originalPath) => {
-      processedContent = processedContent.replace(new RegExp(escapeRegExp(originalPath), 'g'), newPath);
+      const escapedOriginalPath = escapeRegExp(originalPath);
+      // The new path should be relative to the img_path
+      const finalImgPath = newPath.split('/').pop();
+      processedContent = processedContent.replace(new RegExp(`\\(${escapedOriginalPath}\\)`, 'g'), `(${finalImgPath})`);
     });
 
     const frontMatter = `---
 layout: post
 title: "${title.replace(/"/g, '\\"')}"
-date: ${format(creationDate, 'yyyy-MM-dd HH:mm:ss xx')}
+date: ${format(creationDate, 'yyyy-MM-dd HH:mm:ss O')}
 author: ${author}
-categories: [${categories.split(',').map(c => c.trim()).join(', ')}]
-tags: [${tags.split(',').map(t => t.trim()).join(', ')}]
+categories: [${categories.split(',').map(c => c.trim()).filter(Boolean).join(', ')}]
+tags: [${tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')}]
 img_path: /assets/img/posts/${postSlug}/
 ---
 
@@ -196,6 +211,7 @@ ${processedContent}`;
   };
 
   function escapeRegExp(string: string) {
+    // $& means the whole matched string
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
@@ -211,7 +227,7 @@ ${processedContent}`;
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your Awesome Post Title" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="author">Author</Label>
@@ -223,11 +239,12 @@ ${processedContent}`;
               id="categories"
               value={categories}
               onChange={(e) => setCategories(e.target.value)}
+              placeholder="Tech, Security"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="tags">Tags (comma-separated)</Label>
-            <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} />
+            <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Nmap, Recon" />
           </div>
         </CardContent>
       </ScrollArea>
