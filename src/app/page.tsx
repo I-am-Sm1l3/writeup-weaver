@@ -9,6 +9,13 @@ import { MarkdownPreview } from '@/components/markdown-preview';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 
 const initialContent = `## Welcome to Sm1l3's Writeup Weaver
 
@@ -19,7 +26,7 @@ Happy writing!
 
 export default function Sm1l3Page() {
   const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('');
+  const [author, setAuthor] = useState('Sm1l3');
   const [categories, setCategories] = useState('');
   const [tags, setTags] = useState('');
   const [content, setContent] = useState(initialContent);
@@ -29,24 +36,37 @@ export default function Sm1l3Page() {
   return (
     <div className="flex h-screen max-h-screen w-full flex-col bg-background">
       <Header />
-      <main className="flex flex-1 gap-4 px-4 pb-4 overflow-hidden">
-        <div className="w-full max-w-xs">
-          <MetadataSidebar
-            {...{
-              title,
-              setTitle,
-              author,
-              setAuthor,
-              categories,
-              setCategories,
-              tags,
-              setTags,
-              content,
-              isGenerating,
-              setIsGenerating,
-            }}
-          />
-        </div>
+      <main className="flex flex-1 flex-col gap-4 px-4 pb-4 overflow-hidden">
+        <Accordion type="single" collapsible defaultValue="item-1">
+            <AccordionItem value="item-1" className="border-b-0">
+                <Card>
+                    <AccordionTrigger className="p-6 hover:no-underline">
+                        <div className="flex flex-col items-start">
+                            <h3 className="text-lg font-semibold">Post Details</h3>
+                            <p className="text-sm text-muted-foreground">Provide metadata for your post and use tools to help you finish.</p>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-6">
+                        <MetadataSidebar
+                            {...{
+                            title,
+                            setTitle,
+                            author,
+                            setAuthor,
+                            categories,
+                            setCategories,
+                            tags,
+                            setTags,
+                            content,
+                            isGenerating,
+                            setIsGenerating,
+                            }}
+                        />
+                    </AccordionContent>
+                </Card>
+            </AccordionItem>
+        </Accordion>
+
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
           <Card className="flex flex-col">
             <EditorToolbar
