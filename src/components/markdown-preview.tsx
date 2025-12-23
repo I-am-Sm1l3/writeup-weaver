@@ -1,13 +1,12 @@
-
 'use client';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface MarkdownPreviewProps {
   content: string;
@@ -20,51 +19,44 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
         remarkPlugins={[remarkGfm]}
         components={{
           img: ({ node, ...props }) => {
-            const imageInfo = PlaceHolderImages.find((p) => props.src?.includes(p.id));
-
-            if (imageInfo) {
-              const url = new URL(imageInfo.imageUrl);
-              let width = 600;
-              let height = 400;
-
-              const urlWidth = url.searchParams.get('w');
-              if (urlWidth && !isNaN(parseInt(urlWidth))) {
-                width = parseInt(urlWidth);
-              } else {
-                const pathParts = url.pathname.split('/');
-                if (pathParts.length > 2 && !isNaN(parseInt(pathParts[2]))) {
-                  width = parseInt(pathParts[2]);
-                }
-              }
-              
-              const urlHeight = url.searchParams.get('h');
-              if (urlHeight && !isNaN(parseInt(urlHeight))) {
-                height = parseInt(urlHeight);
-              } else {
-                 const pathParts = url.pathname.split('/');
-                 if (pathParts.length > 3 && !isNaN(parseInt(pathParts[3]))) {
-                  height = parseInt(pathParts[3]);
-                }
-              }
-              
-              return (
-                <Image
-                  src={imageInfo.imageUrl}
-                  alt={props.alt || imageInfo.description}
-                  width={width}
-                  height={height}
-                  className="rounded-lg shadow-md my-4 mx-auto"
-                  data-ai-hint={imageInfo.imageHint}
-                />
-              );
+            const src = props.src || '';
+            // Handle dropped images (data URIs)
+            if (src.startsWith('data:')) {
+              // eslint-disable-next-line @next/next/no-img-element
+              return <img {...props} src={src} alt={props.alt || ''} className="rounded-lg shadow-md my-4 mx-auto" />;
             }
             
-            // Handle dropped images (data URIs) and external URLs
-            if (props.src) {
-              // eslint-disable-next-line @next/next/no-img-element
-              return <img {...props} src={props.src} alt={props.alt || ''} className="rounded-lg shadow-md my-4 mx-auto" />;
+            // Handle placeholder images like "image-1.webp"
+            const placeholder = PlaceHolderImages.find(p => src.endsWith(p.id));
+            if (placeholder) {
+              return (
+                <Image
+                  src={placeholder.imageUrl}
+                  alt={placeholder.description}
+                  width={600}
+                  height={400}
+                  className="rounded-lg shadow-md my-4 mx-auto"
+                />
+              )
             }
-            return null;
+
+            // Handle external URLs
+            try {
+              new URL(src);
+              return (
+                <Image
+                  src={src}
+                  alt={props.alt || 'image'}
+                  width={600}
+                  height={400}
+                  className="rounded-lg shadow-md my-4 mx-auto"
+                />
+              );
+            } catch (e) {
+               // Fallback to regular img tag for other relative paths
+               // eslint-disable-next-line @next/next/no-img-element
+               return <img {...props} src={src} alt={props.alt || ''} className="rounded-lg shadow-md my-4 mx-auto" />;
+            }
           },
           h1: ({ node, ...props }) => <h1 className="font-headline text-4xl font-bold mb-4" {...props} />,
           h2: ({ node, ...props }) => <h2 className="font-headline text-3xl font-semibold mt-8 mb-4 border-b pb-2" {...props} />,
