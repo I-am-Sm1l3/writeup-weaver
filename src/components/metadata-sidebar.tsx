@@ -111,13 +111,9 @@ export function MetadataSidebar({
 
       let fetchPromise: Promise<Blob | null>;
 
-      if (originalPath.startsWith('data:')) {
-        fetchPromise = fetch(originalPath).then(res => res.blob());
-      } else {
-        const placeholder = PlaceHolderImages.find(p => originalPath.endsWith(p.id));
-        const imageUrl = placeholder ? placeholder.imageUrl : originalPath;
-
-        fetchPromise = fetch(imageUrl)
+      // Handle both data URIs and external URLs
+      if (originalPath.startsWith('data:') || originalPath.startsWith('http')) {
+         fetchPromise = fetch(originalPath)
           .then(response => {
             if (!response.ok) {
               throw new Error(`Failed to fetch image: ${response.statusText}`);
@@ -125,21 +121,45 @@ export function MetadataSidebar({
             return response.blob();
           })
           .catch(error => {
-            console.error(`Failed to process image ${imageUrl}:`, error);
+            console.error(`Failed to process image ${originalPath}:`, error);
             // Don't block export for a single failed image, just skip it.
+            toast({
+              title: 'Image Skipped',
+              description: `Could not download image from ${originalPath}. It will be skipped in the export.`,
+              variant: 'destructive',
+            })
+            return null;
+          });
+      } else {
+        const placeholderMatch = originalPath.match(/image-(\d+)\.webp/);
+        const placeholder = placeholderMatch ? PlaceHolderImages[0] : null;
+        if (!placeholder) {
+          // If it's not a known placeholder, data URI, or http url, skip it.
+          continue;
+        }
+        
+        fetchPromise = fetch(placeholder.imageUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to fetch image: ${response.statusText}`);
+            }
+            return response.blob();
+          })
+          .catch(error => {
+            console.error(`Failed to process image ${placeholder.imageUrl}:`, error);
             return null;
           });
       }
-      
 
       imagePromises.push(
         fetchPromise.then(blob => {
           if (blob) {
             const extension = blob.type.split('/')[1] || 'png';
             const newImageName = `${imageCounter}.${extension}`;
-            const newImagePathInZip = `assets/img/posts/${postSlug}/${newImageName}`;
+            const newImagePathInPost = `/${postSlug}/${newImageName}`;
+            const newImagePathInZip = `assets/img/posts${newImagePathInPost}`;
             
-            imagePaths.set(originalPath, newImageName);
+            imagePaths.set(originalPath, newImagePathInPost);
             zip.file(newImagePathInZip, blob);
             imageCounter++;
           }
@@ -151,7 +171,9 @@ export function MetadataSidebar({
 
     imagePaths.forEach((newPath, originalPath) => {
       const escapedOriginalPath = escapeRegExp(originalPath);
-      processedContent = processedContent.replace(new RegExp(escapedOriginalPath, 'g'), newPath);
+      // The new path should be relative to the img_path
+      const finalImgPath = newPath.split('/').pop();
+      processedContent = processedContent.replace(new RegExp(`\\(${escapedOriginalPath}\\)`, 'g'), `(${finalImgPath})`);
     });
 
     const frontMatter = `---
