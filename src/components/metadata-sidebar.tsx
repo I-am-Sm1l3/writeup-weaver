@@ -17,8 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Download, Loader2 } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import JSZip from 'jszip';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface MetadataSidebarProps {
   title: string;
@@ -84,9 +84,18 @@ export function MetadataSidebar({
   };
 
   const handleExport = async () => {
+    if (!title.trim()) {
+      toast({
+        title: 'Title is missing',
+        description: 'Please provide a title for your post before exporting.',
+        variant: 'destructive',
+      });
+      return;
+    }
+  
     const zip = new JSZip();
     const creationDate = new Date();
-    const postSlug = (title || 'new-post').toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+    const postSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
     const postFileName = `${format(creationDate, 'yyyy-MM-dd')}-${postSlug}.md`;
     
     let processedContent = content;
@@ -100,81 +109,55 @@ export function MetadataSidebar({
       const originalPath = match[1];
       if (imagePaths.has(originalPath)) continue;
 
-      let imageUrl = originalPath;
-      let isDataUrl = false;
-      
-      if (imageUrl.startsWith('data:image')) {
-        isDataUrl = true;
-      } else {
-        const imageInfo = PlaceHolderImages.find(p => originalPath.includes(p.id));
-        if (imageInfo) {
-            imageUrl = imageInfo.imageUrl;
-        }
-      }
-      
-      let extension = 'webp';
-      if (isDataUrl) {
-          const mimeType = imageUrl.match(/data:image\/([^;]+);/)?.[1] ?? 'webp';
-          extension = mimeType;
-      } else {
-          try {
-            const url = new URL(imageUrl);
-            const pathname = url.pathname;
-            const ext = pathname.split('.').pop();
-            if (ext) {
-              extension = ext.split('?')[0]; // Handle query params
-            }
-          } catch (e) {
-            const ext = imageUrl.split('.').pop();
-            if (ext && ext.length < 5) {
-                extension = ext;
-            }
-          }
-      }
-      
-      const newImageName = `${imageCounter}.${extension}`;
-      const newImagePathInMd = newImageName;
-      const newImagePathInZip = `assets/img/posts/${postSlug}/${newImageName}`;
-      imagePaths.set(originalPath, newImagePathInMd);
-      
-      imageCounter++;
-      
-      const fetchPromise = isDataUrl
-        ? Promise.resolve(fetch(imageUrl).then(res => res.blob()))
-        : fetch(imageUrl)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`Failed to fetch image: ${response.statusText}`);
-              }
-              return response.blob();
-            });
+      let fetchPromise: Promise<Blob | null>;
 
-      imagePromises.push(
-        fetchPromise
-          .then(blob => {
-            zip.file(newImagePathInZip, blob);
+      if (originalPath.startsWith('data:')) {
+        fetchPromise = fetch(originalPath).then(res => res.blob());
+      } else {
+        const placeholder = PlaceHolderImages.find(p => originalPath.endsWith(p.id));
+        const imageUrl = placeholder ? placeholder.imageUrl : originalPath;
+
+        fetchPromise = fetch(imageUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to fetch image: ${response.statusText}`);
+            }
+            return response.blob();
           })
           .catch(error => {
-            console.error(`Failed to process image ${originalPath}:`, error);
-            toast({
-              title: 'Image Processing Failed',
-              description: `Could not process ${originalPath}.`,
-              variant: 'destructive',
-            });
-          })
+            console.error(`Failed to process image ${imageUrl}:`, error);
+            // Don't block export for a single failed image, just skip it.
+            return null;
+          });
+      }
+      
+
+      imagePromises.push(
+        fetchPromise.then(blob => {
+          if (blob) {
+            const extension = blob.type.split('/')[1] || 'png';
+            const newImageName = `${imageCounter}.${extension}`;
+            const newImagePathInZip = `assets/img/posts/${postSlug}/${newImageName}`;
+            
+            imagePaths.set(originalPath, newImageName);
+            zip.file(newImagePathInZip, blob);
+            imageCounter++;
+          }
+        })
       );
     }
 
     await Promise.all(imagePromises);
 
     imagePaths.forEach((newPath, originalPath) => {
-      processedContent = processedContent.replace(new RegExp(escapeRegExp(originalPath), 'g'), newPath);
+      const escapedOriginalPath = escapeRegExp(originalPath);
+      processedContent = processedContent.replace(new RegExp(escapedOriginalPath, 'g'), newPath);
     });
 
     const frontMatter = `---
 layout: post
 title: "${title.replace(/"/g, '\\"')}"
-date: ${format(creationDate, 'yyyy-MM-dd HH:mm:ss xx')}
+date: ${format(creationDate, 'yyyy-MM-dd HH:mm:ss O')}
 author: ${author}
 categories: [${categories.split(',').map(c => c.trim()).filter(Boolean).join(', ')}]
 tags: [${tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')}]
@@ -202,6 +185,7 @@ ${processedContent}`;
   };
 
   function escapeRegExp(string: string) {
+    // $& means the whole matched string
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
@@ -217,7 +201,7 @@ ${processedContent}`;
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your Awesome Post Title" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="author">Author</Label>
@@ -229,11 +213,12 @@ ${processedContent}`;
               id="categories"
               value={categories}
               onChange={(e) => setCategories(e.target.value)}
+              placeholder="Tech, Security"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="tags">Tags (comma-separated)</Label>
-            <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} />
+            <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Nmap, Recon" />
           </div>
         </CardContent>
       </ScrollArea>
