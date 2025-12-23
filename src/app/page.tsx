@@ -44,7 +44,7 @@ export default function Sm1l3Page() {
         const reader = new FileReader();
         reader.onload = (readEvent) => {
           const dataUrl = readEvent.target?.result as string;
-          // Use a generic name, export will handle renaming
+          // Use the original file name for alt text. Export will handle renaming.
           const markdownImage = `![${file.name}](${dataUrl})`;
 
           setContent(prev => {
