@@ -98,6 +98,9 @@ export function MetadataSidebar({
     const postSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
     const postFileName = `${format(creationDate, 'yyyy-MM-dd')}-${postSlug}.md`;
     
+    // Create the empty directory for images
+    zip.folder(`assets/img/posts/${postSlug}`);
+
     let processedContent = content;
     const imageRegex = /!\[.*?\]\((.*?)\)/g;
     const imagePaths = new Map<string, string>();
