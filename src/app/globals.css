@@ -71,11 +71,19 @@
   .markdown-preview h1 { @apply font-headline text-4xl font-bold; }
   .markdown-preview h2 { @apply font-headline text-3xl font-semibold mt-8 mb-4 border-b pb-2; }
   .markdown-preview h3 { @apply font-headline text-2xl font-semibold mt-6 mb-3; }
-  .markdown-preview p { @apply text-base leading-relaxed; }
+  .markdown-preview p { 
+    @apply text-base leading-relaxed;
+    overflow-wrap: break-word;
+    word-break: break-word;
+   }
   .markdown-preview a { @apply text-primary hover:underline; }
   .markdown-preview blockquote { @apply border-l-4 border-primary/50 pl-4 italic text-muted-foreground; }
   .markdown-preview ul, .markdown-preview ol { @apply ml-6; }
   .markdown-preview code:not(pre > code) { @apply font-code bg-muted text-muted-foreground rounded px-1.5 py-1 text-sm; }
   .markdown-preview pre { @apply bg-card border rounded-md my-4; }
-  .markdown-preview pre > code { @apply font-code text-sm p-4 block overflow-x-auto; }
+  .markdown-preview pre > code { 
+    @apply font-code text-sm p-4 block;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
 }
