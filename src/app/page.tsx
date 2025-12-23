@@ -40,36 +40,26 @@ export default function Sm1l3Page() {
       const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
       if (imageFiles.length === 0) return;
 
+      let markdownToInsert = '';
       imageFiles.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (readEvent) => {
-          const dataUrl = readEvent.target?.result as string;
-          // Use the original file name for alt text. Export will handle renaming.
-          const markdownImage = `![${file.name}](${dataUrl})`;
+        // Just use the file name to create the markdown tag
+        const markdownImage = `![alt text](${file.name})`;
+        markdownToInsert += markdownImage + '\n';
+      });
 
-          setContent(prev => {
-            const textarea = textareaRef.current;
-            if (textarea) {
-              const start = textarea.selectionStart;
-              const end = textarea.selectionEnd;
-              return `${prev.substring(0, start)}${markdownImage}${prev.substring(end)}`;
-            }
-            return `${prev}\n${markdownImage}`;
-          });
-        };
-        reader.onerror = () => {
-          toast({
-            title: 'Error reading file',
-            description: `Could not read the file ${file.name}.`,
-            variant: 'destructive',
-          });
-        };
-        reader.readAsDataURL(file);
+      setContent(prev => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          return `${prev.substring(0, start)}${markdownToInsert}${prev.substring(end)}`;
+        }
+        return `${prev}\n${markdownToInsert}`;
       });
 
       toast({
-        title: 'Image(s) added',
-        description: `Successfully added ${imageFiles.length} image(s) to your post.`,
+        title: 'Image Reference(s) Added',
+        description: `Successfully added ${imageFiles.length} image reference(s) to your post.`,
       });
     }
   };
@@ -119,7 +109,7 @@ export default function Sm1l3Page() {
           >
             {isDragging && (
               <div className="absolute inset-0 bg-primary/20 flex items-center justify-center pointer-events-none z-10 rounded-lg">
-                <p className="text-primary-foreground font-bold text-lg bg-primary px-4 py-2 rounded-md">Drop image to add</p>
+                <p className="text-primary-foreground font-bold text-lg bg-primary px-4 py-2 rounded-md">Drop image to add reference</p>
               </div>
             )}
             <EditorToolbar
