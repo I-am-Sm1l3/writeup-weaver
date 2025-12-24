@@ -81,9 +81,8 @@ export default function Sm1l3Page() {
                 ref={textareaRef}
                 value={content}
                 onChange={handleContentChange}
-                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0"
+                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0 bg-card text-card-foreground font-code"
                 placeholder="Start writing your masterpiece..."
-                style={{ backgroundColor: '#0D1117' }}
               />
             </CardContent>
           </Card>
