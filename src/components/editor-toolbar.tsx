@@ -1,6 +1,6 @@
 'use client';
 
-import type { Dispatch, SetStateAction, RefObject } from 'react';
+import type { RefObject, Dispatch, SetStateAction } from 'react';
 import {
   Bold,
   Italic,
@@ -20,12 +20,10 @@ import {
   ListTodo,
   Table,
   Terminal,
-  Smile,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatTextWithAI } from '@/ai/flows/format-text-with-ai';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -45,33 +43,6 @@ type FormatType =
   | 'ul' | 'ol' | 'task'
   | 'codeBlock' | 'fileBlock' | 'inlineCode'
   | 'image' | 'table';
-  
-const emojis = [
-  '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
-  '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
-  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
-  '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
-  '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
-  '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
-  '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯',
-  '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐',
-  '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈',
-  '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾',
-  '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿',
-  '😾', '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤏', '✌️', '🤞',
-  '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍',
-  '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝',
-  '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦵', '🦿', '🦶', '👣',
-  '👂', '🦻', '👃', '🧠', '🦷', '🦴', '👀', '👁️', '👅', '👄',
-  '💋', '🩸', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
-  '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝',
-  '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️',
-  '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎',
-  '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️',
-  '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮',
-  '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎',
-  '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯',
-];
 
 export function EditorToolbar({
   textareaRef,
@@ -83,23 +54,6 @@ export function EditorToolbar({
   const { toast } = useToast();
   const [imageCount, setImageCount] = useState(0);
 
-  const insertText = (text: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    const newContent = `${content.substring(0, start)}${text}${content.substring(end)}`;
-    setContent(newContent);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = start + text.length;
-      textarea.selectionEnd = start + text.length;
-    }, 0);
-  };
-
   const applyFormat = (format: FormatType) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -107,155 +61,131 @@ export function EditorToolbar({
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = content.substring(start, end);
+    const beforeText = content.substring(0, start);
+    const afterText = content.substring(end);
 
     let replacement = '';
-    let selectionOffsetStart = 0;
-    let selectionOffsetEnd = 0;
+    let cursorOffset = 0;
+    let selectionLength = 0;
 
     const applyLinePrefix = (prefix: string) => {
       const lines = selectedText.split('\n');
       if (lines.length > 1 && selectedText.trim() !== '') {
-        return {
-          text: lines.map(line => `${prefix}${line}`).join('\n'),
-          isBlock: true,
-        };
+        return lines.map(line => `${prefix}${line}`).join('\n');
       }
-      return { text: `${prefix}${selectedText}`, isBlock: false };
+      return `${prefix}${selectedText}`;
     }
 
     switch (format) {
       case 'h1':
         replacement = `# ${selectedText}`;
-        selectionOffsetStart = 2;
+        cursorOffset = 2;
         break;
       case 'h2':
         replacement = `## ${selectedText}`;
-        selectionOffsetStart = 3;
+        cursorOffset = 3;
         break;
       case 'h3':
         replacement = `### ${selectedText}`;
-        selectionOffsetStart = 4;
+        cursorOffset = 4;
         break;
       case 'bold':
         replacement = `**${selectedText}**`;
-        selectionOffsetStart = 2;
-        selectionOffsetEnd = 2;
+        cursorOffset = 2;
         break;
       case 'italic':
         replacement = `*${selectedText}*`;
-        selectionOffsetStart = 1;
-        selectionOffsetEnd = 1;
+        cursorOffset = 1;
         break;
       case 'strikethrough':
         replacement = `~~${selectedText}~~`;
-        selectionOffsetStart = 2;
-        selectionOffsetEnd = 2;
+        cursorOffset = 2;
         break;
       case 'blockquote':
-        const bqResult = applyLinePrefix('> ');
-        replacement = bqResult.text;
-        if (bqResult.isBlock) {
-          selectionOffsetStart = 0;
-          selectionOffsetEnd = -replacement.length;
-        } else {
-          selectionOffsetStart = 2;
-        }
+        replacement = applyLinePrefix('> ');
+        cursorOffset = 2;
+        selectionLength = replacement.length;
         break;
       case 'ul':
-        const ulResult = applyLinePrefix('- ');
-        replacement = ulResult.text;
-        if (ulResult.isBlock) {
-          selectionOffsetStart = 0;
-          selectionOffsetEnd = -replacement.length;
-        } else {
-          selectionOffsetStart = 2;
-        }
+        replacement = applyLinePrefix('- ');
+        cursorOffset = 2;
+        selectionLength = replacement.length;
         break;
       case 'ol':
         const lines = selectedText.split('\n');
         if (lines.length > 1 && selectedText.trim() !== '') {
           replacement = lines.map((line, index) => `${index + 1}. ${line}`).join('\n');
-          selectionOffsetStart = 0;
-          selectionOffsetEnd = -replacement.length;
         } else {
           replacement = `1. ${selectedText}`;
-          selectionOffsetStart = 3;
         }
+        cursorOffset = 3;
+        selectionLength = replacement.length;
         break;
-       case 'task':
-        const taskResult = applyLinePrefix('- [ ] ');
-        replacement = taskResult.text;
-        if (taskResult.isBlock) {
-          selectionOffsetStart = 0;
-          selectionOffsetEnd = -replacement.length;
-        } else {
-          selectionOffsetStart = 6;
-        }
+      case 'task':
+        replacement = applyLinePrefix('- [ ] ');
+        cursorOffset = 6;
+        selectionLength = replacement.length;
         break;
       case 'link':
         if (selectedText) {
           replacement = `[${selectedText}]()`;
-          selectionOffsetStart = replacement.length - 1;
-          selectionOffsetEnd = 0;
+          cursorOffset = replacement.length - 1;
         } else {
           replacement = `[link text](url)`;
-          selectionOffsetStart = 1;
-          selectionOffsetEnd = -(replacement.length-9);
+          cursorOffset = replacement.indexOf('(') + 1;
+          selectionLength = 'url'.length;
         }
         break;
       case 'hr':
         replacement = `\n---\n`;
-        selectionOffsetStart = 5;
+        cursorOffset = 5;
         break;
       case 'inlineCode':
         replacement = `\`${selectedText}\``;
-        selectionOffsetStart = 1;
-        selectionOffsetEnd = 1;
+        cursorOffset = 1;
         break;
       case 'codeBlock':
         replacement = `\`\`\`console\n${selectedText}\n\`\`\``;
-        selectionOffsetStart = 11;
+        cursorOffset = 11;
         break;
       case 'fileBlock':
         replacement = `\`\`\`file:path/to/file\n${selectedText}\n\`\`\``;
-        selectionOffsetStart = 8;
+        cursorOffset = 8;
         break;
       case 'image':
         const newImageCount = imageCount + 1;
         setImageCount(newImageCount);
         replacement = `![alt text](image-${newImageCount}.webp)`;
-        selectionOffsetStart = 2;
-        selectionOffsetEnd = -(replacement.length - 10);
+        cursorOffset = 2;
+        selectionLength = 'alt text'.length;
         break;
       case 'table':
         replacement = `| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1   | Cell 2   |\n`;
-        selectionOffsetStart = 2;
-        selectionOffsetEnd = -replacement.length + 10;
+        cursorOffset = 2;
+        selectionLength = 'Header 1'.length;
         break;
     }
-
-    let prefix = "";
-    if (['h1', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'task', 'hr', 'codeBlock', 'fileBlock', 'table'].includes(format)) {
-        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
-        if (lineStart > 0 && content.substring(lineStart-1, lineStart) !== '\n') {
-            prefix = "\n";
-        }
-    }
     
-    const newContent = `${content.substring(0, start)}${prefix}${replacement}${content.substring(end)}`;
-    setContent(newContent);
+    let finalContent = `${beforeText}${replacement}${afterText}`;
+    
+    if (['h1', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'task', 'hr', 'codeBlock', 'fileBlock', 'table'].includes(format) && start > 0 && content[start-1] !== '\n') {
+        finalContent = `${beforeText}\n${replacement}${afterText}`;
+        cursorOffset += 1;
+    }
+
+    setContent(finalContent);
 
     setTimeout(() => {
       textarea.focus();
-      textarea.selectionStart = start + prefix.length + selectionOffsetStart;
-      textarea.selectionEnd = start + prefix.length + replacement.length - Math.abs(selectionOffsetEnd);
+      const finalCursorStart = start + cursorOffset;
+      const finalCursorEnd = selectionLength > 0 ? (finalCursorStart + selectionLength) : finalCursorStart + selectedText.length;
+      textarea.setSelectionRange(finalCursorStart, finalCursorEnd);
     }, 0);
   };
-  
+
   const handleAiFormat = async () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
@@ -275,7 +205,6 @@ export function EditorToolbar({
       const result = await formatTextWithAI({ text: selectedText });
       const newContent = `${content.substring(0, start)}${result.formattedText}${content.substring(end)}`;
       setContent(newContent);
-
       toast({
         title: 'AI Formatting Complete',
         description: 'Your selected text has been formatted.',
@@ -291,7 +220,6 @@ export function EditorToolbar({
       setIsGenerating(false);
     }
   };
-
 
   const toolbarButtons = [
     { icon: Heading1, format: 'h1', tooltip: 'Heading 1' },
@@ -332,7 +260,6 @@ export function EditorToolbar({
                   size="icon"
                   onClick={() => applyFormat(btn.format as FormatType)}
                   disabled={isGenerating}
-                  aria-label={btn.tooltip}
                 >
                   <btn.icon className="h-4 w-4" />
                 </Button>
@@ -343,38 +270,10 @@ export function EditorToolbar({
             </Tooltip>
           );
         })}
-        <Popover>
-          <Tooltip>
-            <PopoverTrigger asChild>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isGenerating} aria-label="Insert Emoji">
-                  <Smile className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-            </PopoverTrigger>
-            <TooltipContent>
-              <p>Insert Emoji</p>
-            </TooltipContent>
-          </Tooltip>
-          <PopoverContent className="w-80 h-96">
-            <div className="grid grid-cols-8 gap-2 overflow-y-auto h-full">
-              {emojis.map((emoji) => (
-                <Button
-                  key={emoji}
-                  variant="ghost"
-                  className="text-xl"
-                  onClick={() => insertText(emoji)}
-                >
-                  {emoji}
-                </Button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
         <Separator orientation="vertical" className="h-6 mx-2" />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={handleAiFormat} disabled={isGenerating} aria-label="Format with AI">
+            <Button variant="ghost" size="icon" onClick={handleAiFormat} disabled={isGenerating}>
               <Wand2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
