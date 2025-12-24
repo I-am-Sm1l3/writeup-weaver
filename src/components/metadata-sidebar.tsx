@@ -154,7 +154,6 @@ export function MetadataSidebar({
 layout: post
 title: "${title.replace(/"/g, '\\"')}"
 date: ${format(creationDate, 'yyyy-MM-dd HH:mm:ss O')}
-author: ${author}
 categories: [${categories.split(',').map(c => c.trim()).filter(Boolean).join(', ')}]
 tags: [${tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')}]
 img_path: /assets/img/posts/${postSlug}/
