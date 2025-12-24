@@ -67,7 +67,7 @@ export default function Sm1l3Page() {
         </Accordion>
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
-          <Card className="flex flex-col">
+          <Card className="flex flex-col" style={{ backgroundColor: '#0D1117' }}>
             <EditorToolbar
               textareaRef={textareaRef}
               content={content}
@@ -80,15 +80,12 @@ export default function Sm1l3Page() {
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0"
+                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0 bg-transparent"
                 placeholder="Start writing your masterpiece..."
               />
             </CardContent>
           </Card>
           <Card className="hidden lg:flex flex-col overflow-hidden">
-            <div className="flex items-center gap-1 border-b p-2 flex-wrap h-[53px]">
-              <h3 className="text-sm font-medium text-muted-foreground px-2">Preview Window</h3>
-            </div>
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                   <MarkdownPreview content={content} />
