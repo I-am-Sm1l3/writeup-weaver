@@ -20,7 +20,7 @@ const initialContent = `## Welcome to Sm1l3's Writeup Weaver
 
 Start crafting your next technical masterpiece! Use the toolbar above to format your text and the sidebar to add metadata.
 
-Happy writing! :rocket:
+Happy writing!
 `;
 
 export default function Sm1l3Page() {
@@ -41,7 +41,7 @@ export default function Sm1l3Page() {
                 <Card>
                     <AccordionTrigger className="p-6 hover:no-underline">
                         <div className="flex flex-col items-start">
-                            <h2 className="text-lg font-semibold">Post Details</h2>
+                            <h3 className="text-lg font-semibold">Post Details</h3>
                             <p className="text-sm text-muted-foreground">Provide metadata for your post and use tools to help you finish.</p>
                         </div>
                     </AccordionTrigger>
@@ -67,7 +67,7 @@ export default function Sm1l3Page() {
         </Accordion>
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
-          <Card className="flex flex-col">
+          <Card className="flex flex-col" style={{ backgroundColor: '#0D1117' }}>
             <EditorToolbar
               textareaRef={textareaRef}
               content={content}
@@ -80,7 +80,7 @@ export default function Sm1l3Page() {
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0"
+                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0 bg-transparent"
                 placeholder="Start writing your masterpiece..."
               />
             </CardContent>
