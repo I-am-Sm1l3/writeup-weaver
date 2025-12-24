@@ -15,13 +15,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { replaceEmojiShortcuts } from '@/lib/emoji';
 
-const initialContent = `## Welcome to Sm1l3's Writeup Weaver
-
-Start crafting your next technical masterpiece! Use the toolbar above to format your text and the sidebar to add metadata.
-
-Happy writing!
-`;
+const initialContent = `## Welcome to Sm1l3's Writeup Weaver`;
 
 export default function Sm1l3Page() {
   const [title, setTitle] = useState('');
@@ -31,6 +27,11 @@ export default function Sm1l3Page() {
   const [content, setContent] = useState(initialContent);
   const [isGenerating, setIsGenerating] = useState(false);
   const textareaRef = useRef<ElementRef<'textarea'>>(null);
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = replaceEmojiShortcuts(e.target.value);
+    setContent(newText);
+  };
 
   return (
     <div className="flex h-screen max-h-screen w-full flex-col bg-background">
@@ -67,7 +68,7 @@ export default function Sm1l3Page() {
         </Accordion>
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
-          <Card className="flex flex-col" style={{ backgroundColor: '#0D1117' }}>
+          <Card className="flex flex-col">
             <EditorToolbar
               textareaRef={textareaRef}
               content={content}
@@ -79,9 +80,10 @@ export default function Sm1l3Page() {
               <Textarea
                 ref={textareaRef}
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0 bg-transparent"
+                onChange={handleContentChange}
+                className="h-full w-full resize-none border-0 rounded-t-none focus-visible:ring-0"
                 placeholder="Start writing your masterpiece..."
+                style={{ backgroundColor: '#0D1117' }}
               />
             </CardContent>
           </Card>
