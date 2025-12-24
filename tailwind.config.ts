@@ -19,9 +19,9 @@ const config = {
     },
     extend: {
       fontFamily: {
-        body: ['Inter', ...fontFamily.sans],
-        headline: ['Space Grotesk', ...fontFamily.sans],
-        code: ['Source Code Pro', ...fontFamily.mono],
+        body: ['var(--font-body)', ...fontFamily.sans],
+        headline: ['var(--font-headline)', ...fontFamily.sans],
+        code: ['var(--font-code)', ...fontFamily.mono],
       },
       colors: {
         border: "hsl(var(--border))",
