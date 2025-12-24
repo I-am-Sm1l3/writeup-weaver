@@ -21,7 +21,7 @@ const initialContent = `## Welcome to Sm1l3's Writeup Weaver`;
 
 export default function Sm1l3Page() {
   const [title, setTitle] = useState('');
-  const [author, setAuthor] = useState('Sm1l3');
+  //const [author, setAuthor] = useState('Sm1l3');
   const [categories, setCategories] = useState('');
   const [tags, setTags] = useState('');
   const [content, setContent] = useState(initialContent);
