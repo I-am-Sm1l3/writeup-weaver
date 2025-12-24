@@ -29,10 +29,14 @@ const prompt = ai.definePrompt({
   name: 'formatTextWithAIPrompt',
   input: {schema: FormatTextWithAIInputSchema},
   output: {schema: FormatTextWithAIOutputSchema},
-  prompt: `You are an AI expert in formatting text. You will receive plain text and you will format it appropriately, inferring the user\'s intent.  Create lists, code sections, and headings as appropriate to improve the readability and structure of the text. Return only the formatted text.
+  prompt: `You are an AI expert in formatting text for technical writeups. You will receive plain text and you will format it with Markdown, inferring the user's intent. Create lists, code sections, and headings as appropriate to improve readability.
 
-Text to format:
-{{{text}}}`,
+  Additionally, you should identify elements that would be best presented as centered and wrap them in '<p align="center">...</p>' tags. This should typically only be for a main introductory image or a link directly under it, similar to a hero element in a blog post. Do not center regular paragraphs, lists, or code blocks.
+
+  Return only the formatted Markdown.
+
+  Text to format:
+  {{{text}}}`,
 });
 
 const formatTextWithAIFlow = ai.defineFlow(
