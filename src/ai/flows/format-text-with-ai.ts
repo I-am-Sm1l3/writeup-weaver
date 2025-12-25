@@ -29,12 +29,16 @@ const prompt = ai.definePrompt({
   name: 'formatTextWithAIPrompt',
   input: {schema: FormatTextWithAIInputSchema},
   output: {schema: FormatTextWithAIOutputSchema},
-  prompt: `You are an AI expert in formatting text for technical writeups. You will receive plain text and you will format it with Markdown, inferring the user's intent. Create lists, code sections, and headings as appropriate to improve readability.
+  prompt: `You are an AI expert in formatting text for technical writeups. You will receive text that may be partially formatted with Markdown.
 
-  Return only the formatted Markdown.
+Your task is to improve the formatting, but with these strict rules:
+- **DO NOT** change or remove any existing Markdown formatting. If you see a line that is already a heading (e.g., starts with '##'), a list item (e.g., starts with '-'), or is inside a code block, you must leave it as is.
+- **ONLY** add Markdown formatting to plain text that lacks structure. For example, turn unformatted lines into lists, code blocks, or headings where it is appropriate.
+- **DO NOT** change the user's original wording or meaning.
+- **DO NOT** use any HTML tags. Only return pure Markdown.
 
-  Text to format:
-  {{{text}}}`,
+Apply these rules to the text below:
+{{{text}}}`,
 });
 
 const formatTextWithAIFlow = ai.defineFlow(
