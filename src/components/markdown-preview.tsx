@@ -28,15 +28,12 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
           img: () => null,
           code({ node, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            const lang = match ? match[1] : 'clike'; // Default to a common language if none is specified
-            const code = String(children).replace(/\n$/, '');
             
-            // Check if it's a fenced code block by inspecting the parent.
-            // React-markdown will wrap fenced code blocks in a <pre> tag.
-            // The `inline` property is false for fenced code blocks.
-            const isFenced = !props.inline;
-
-            if (isFenced) {
+            // React-markdown provides an `inline` prop to differentiate.
+            // It's false for fenced code blocks (```) and true for inline code (`).
+            if (!props.inline && match) {
+              const lang = match[1];
+              const code = String(children).replace(/\n$/, '');
               const highlighted = Prism.highlight(
                 code,
                 Prism.languages[lang] || Prism.languages.clike,
@@ -52,7 +49,8 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
               );
             }
             
-            // For inline code, render it as is.
+            // For inline code or code blocks without a language, render it simply.
+            // The CSS in globals.css will style inline code appropriately.
             return <code className={className} {...props}>{children}</code>;
           },
         }}
