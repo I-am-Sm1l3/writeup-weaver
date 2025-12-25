@@ -158,7 +158,7 @@ categories: [${categories.split(',').map(c => c.trim()).filter(Boolean).join(', 
 tags: [${tags.split(',').map(t => t.trim()).filter(Boolean).join(', ')}]
 img_path: /assets/img/posts/${postSlug}/
 image:
-  path: /assets/img/posts/${postSlug}/${postSlug}.webp
+  path: /assets/img/posts/${postSlug}/${postSlug}.png
 ---
 
 ${processedContent}`;
