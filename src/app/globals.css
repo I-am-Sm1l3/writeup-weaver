@@ -66,20 +66,34 @@
     @apply bg-background text-foreground;
   }
   .markdown-preview {
-    @apply max-w-none rounded-lg p-6;
+    @apply max-w-none prose prose-invert prose-p:text-foreground prose-headings:text-foreground prose-a:text-primary hover:prose-a:underline prose-blockquote:border-primary/50 prose-blockquote:text-muted-foreground prose-strong:text-foreground prose-code:text-foreground prose-ul:list-disc prose-ol:list-decimal rounded-lg p-6;
   }
+
+  /* Custom table styles to override prose */
+  .markdown-preview table {
+    @apply w-full my-4 text-left border-collapse;
+  }
+  .markdown-preview th,
+  .markdown-preview td {
+    @apply border p-3;
+  }
+  .markdown-preview th {
+    @apply font-semibold;
+  }
+  .markdown-preview tr:nth-child(even) {
+    @apply bg-muted/20;
+  }
+
   .markdown-preview h1 { @apply font-headline text-3xl font-bold border-b pb-2 mb-4; }
   .markdown-preview h2 { @apply font-headline text-2xl font-semibold mt-8 mb-4 border-b pb-2; }
   .markdown-preview h3 { @apply font-headline text-xl font-semibold mt-6 mb-3; }
-  .markdown-preview p { 
+  .markdown-preview p {
     @apply text-base leading-relaxed;
     overflow-wrap: break-word;
     word-break: break-word;
    }
   .markdown-preview a { @apply text-primary hover:underline; }
   .markdown-preview blockquote { @apply border-l-4 border-primary/50 pl-4 italic text-muted-foreground; }
-  .markdown-preview ul { @apply list-disc; }
-  .markdown-preview ol { @apply list-decimal; }
   .markdown-preview ul, .markdown-preview ol { @apply ml-6; }
   .markdown-preview code:not(pre > code) { @apply font-code bg-muted text-muted-foreground rounded px-1.5 py-1 text-sm; }
   
