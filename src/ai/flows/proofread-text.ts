@@ -31,17 +31,17 @@ const prompt = ai.definePrompt({
   output: {schema: ProofreadTextOutputSchema},
   prompt: `You are an expert technical editor. You will receive a piece of text and your task is to proofread it for errors.
 
-  - Correct any spelling mistakes.
-  - Fix grammatical errors, including punctuation and sentence structure.
-  - Improve clarity and flow to make the text more readable and professional.
-  - DO NOT change the original meaning of the text.
-  - DO NOT add new content or information.
-  - DO NOT perform any markdown formatting (like adding headings, lists, or code blocks).
+- Correct any spelling mistakes.
+- Fix grammatical errors, including punctuation and sentence structure.
+- Improve clarity and flow to make the text more readable and professional.
+- DO NOT change the original meaning of the text.
+- DO NOT add new content or information.
+- DO NOT perform any markdown formatting (like adding headings, lists, or code blocks).
 
-  Return only the corrected text.
+Return only the corrected text.
 
-  Text to proofread:
-  {{{text}}}`,
+Text to proofread:
+{{{text}}}`,
 });
 
 const proofreadTextFlow = ai.defineFlow(
