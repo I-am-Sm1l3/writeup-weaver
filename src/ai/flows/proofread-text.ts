@@ -39,6 +39,9 @@ const prompt = ai.definePrompt({
 - DO NOT perform any markdown formatting (like adding headings, lists, or code blocks).
 - Your job is only doing grammatical fixes. Nothing else.
 - If you see a sentence that is vague and gramatically incorrect fix it.
+- YOUR JOB IS ONLY ENG. CHECK A SENTENCE. IF IT IS CORRECT. MOVE ON. DO NOT FUCKING USE YOUR LITTLE BRAIN TO MESS UP THE MARKDOWN. 
+- YOUR FUCKING JOB IS CHECKING GRAMMAR. SO JUST DO THAT ONLY.
+- **NEVER EVER TOUCH THE MARKDOWN**
 
 Return only the corrected text.
 
