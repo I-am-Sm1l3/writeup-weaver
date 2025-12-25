@@ -157,7 +157,7 @@ export function EditorToolbar({
       case 'image':
         const newImageCount = imageCount + 1;
         setImageCount(newImageCount);
-        replacement = `![alt text](image-${newImageCount}.webp)`;
+        replacement = `![alt text](image-${newImageCount}.png)`;
         cursorOffset = 2;
         selectionLength = 'alt text'.length;
         break;
