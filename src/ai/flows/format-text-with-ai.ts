@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
 
 Your task is to improve the formatting, but with these strict rules:
 - **DO NOT** change or remove any existing Markdown formatting. If you see a line that is already a heading (e.g., starts with '##'), a list item (e.g., starts with '-'), or is inside a code block, you must leave it as is.
-- **ONLY** add Markdown formatting to plain text that lacks structure. For example, turn unformatted lines into lists, code blocks, or headings where it is appropriate.
+- **ONLY** add Markdown formatting to plain text that lacks structure. For example, turn unformatted lines into lists, code blocks, or headings where it is appropriate and by saying "appropriate" i fucking mean it.
 - **DO NOT** change the user's original wording or meaning.
 - **DO NOT** use any HTML tags. Only return pure Markdown.
 
