@@ -36,6 +36,8 @@ Your task is to improve the formatting, but with these strict rules:
 - **ONLY** add Markdown formatting to plain text that lacks structure. For example, turn unformatted lines into lists, code blocks, or headings where it is appropriate and by saying "appropriate" i fucking mean it.
 - **DO NOT** change the user's original wording or meaning.
 - **DO NOT** use any HTML tags. Only return pure Markdown.
+- If any html is present. **Change** It to markdown
+- Your goal is to give a result that is one hundred percent markdown language.
 
 Apply these rules to the text below:
 {{{text}}}`,
