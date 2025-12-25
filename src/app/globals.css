@@ -79,6 +79,8 @@
   .markdown-preview a { @apply text-primary hover:underline; }
   .markdown-preview blockquote { @apply border-l-4 border-primary/50 pl-4 italic text-muted-foreground; }
   .markdown-preview ul, .markdown-preview ol { @apply ml-6; }
+  .markdown-preview ul { @apply list-disc; }
+  .markdown-preview ol { @apply list-decimal; }
   .markdown-preview code:not(pre > code) { @apply font-code bg-muted text-muted-foreground rounded px-1.5 py-1 text-sm; }
   
   /* Overwrite prose styles for pre elements to use Prism theme */
