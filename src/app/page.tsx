@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { ElementRef } from 'react';
 import { Header } from '@/components/header';
 import { MetadataSidebar } from '@/components/metadata-sidebar';
@@ -27,6 +27,43 @@ export default function Sm1l3Page() {
   const [content, setContent] = useState(initialContent);
   const [isGenerating, setIsGenerating] = useState(false);
   const textareaRef = useRef<ElementRef<'textarea'>>(null);
+
+  // Load state from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem('writeup-progress');
+      if (savedState) {
+        const { title, author, categories, tags, content, timestamp } = JSON.parse(savedState);
+        // Only load if it's not older than 7 days
+        if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
+            setTitle(title || '');
+            setAuthor(author || 'Sm1l3');
+            setCategories(categories || '');
+            setTags(tags || '');
+            setContent(content || initialContent);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load state from localStorage", error);
+    }
+  }, []);
+
+  // Save state to localStorage on change
+  useEffect(() => {
+    try {
+      const stateToSave = {
+        title,
+        author,
+        categories,
+        tags,
+        content,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem('writeup-progress', JSON.stringify(stateToSave));
+    } catch (error) {
+        console.error("Failed to save state to localStorage", error);
+    }
+  }, [title, author, categories, tags, content]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = replaceEmojiShortcuts(e.target.value);
