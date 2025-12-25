@@ -78,9 +78,9 @@
    }
   .markdown-preview a { @apply text-primary hover:underline; }
   .markdown-preview blockquote { @apply border-l-4 border-primary/50 pl-4 italic text-muted-foreground; }
-  .markdown-preview ul, .markdown-preview ol { @apply ml-6; }
   .markdown-preview ul { @apply list-disc; }
   .markdown-preview ol { @apply list-decimal; }
+  .markdown-preview ul, .markdown-preview ol { @apply ml-6; }
   .markdown-preview code:not(pre > code) { @apply font-code bg-muted text-muted-foreground rounded px-1.5 py-1 text-sm; }
   
   /* Overwrite prose styles for pre elements to use Prism theme */
@@ -101,5 +101,9 @@
     color: #d6deeb;
     white-space: pre-wrap;
     word-break: break-all;
+  }
+
+  .image-placeholder {
+    @apply my-4 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed bg-muted/50 p-6;
   }
 }
