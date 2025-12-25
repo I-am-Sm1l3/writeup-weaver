@@ -20,11 +20,13 @@ import {
   ListTodo,
   Table,
   Terminal,
+  SpellCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { formatTextWithAI } from '@/ai/flows/format-text-with-ai';
+import { proofreadText } from '@/ai/flows/proofread-text';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -183,7 +185,7 @@ export function EditorToolbar({
     }, 0);
   };
 
-  const handleAiFormat = async () => {
+  const handleAiAction = async (action: 'format' | 'proofread') => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     const start = textarea.selectionStart;
@@ -192,7 +194,7 @@ export function EditorToolbar({
     if (start === end) {
       toast({
         title: 'No text selected',
-        description: 'Please select the text you want to format with AI.',
+        description: 'Please select the text you want to process.',
         variant: 'destructive',
       });
       return;
@@ -202,17 +204,29 @@ export function EditorToolbar({
     setIsGenerating(true);
 
     try {
-      const result = await formatTextWithAI({ text: selectedText });
-      const newContent = `${content.substring(0, start)}${result.formattedText}${content.substring(end)}`;
+      let resultText = '';
+      let toastTitle = '';
+
+      if (action === 'format') {
+        const result = await formatTextWithAI({ text: selectedText });
+        resultText = result.formattedText;
+        toastTitle = 'AI Formatting Complete';
+      } else {
+        const result = await proofreadText({ text: selectedText });
+        resultText = result.proofreadText;
+        toastTitle = 'AI Proofreading Complete';
+      }
+
+      const newContent = `${content.substring(0, start)}${resultText}${content.substring(end)}`;
       setContent(newContent);
       toast({
-        title: 'AI Formatting Complete',
-        description: 'Your selected text has been formatted.',
+        title: toastTitle,
+        description: 'Your selected text has been updated.',
       });
     } catch (error) {
-      console.error('AI formatting failed:', error);
+      console.error(`AI ${action} failed:`, error);
       toast({
-        title: 'AI Formatting Failed',
+        title: `AI ${action.charAt(0).toUpperCase() + action.slice(1)} Failed`,
         description: 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
@@ -273,12 +287,22 @@ export function EditorToolbar({
         <Separator orientation="vertical" className="h-6 mx-2" />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={handleAiFormat} disabled={isGenerating}>
+            <Button variant="ghost" size="icon" onClick={() => handleAiAction('format')} disabled={isGenerating}>
               <Wand2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>Format with AI</p>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={() => handleAiAction('proofread')} disabled={isGenerating}>
+              <SpellCheck className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Proofread with AI</p>
           </TooltipContent>
         </Tooltip>
       </div>
