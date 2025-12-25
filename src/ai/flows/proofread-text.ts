@@ -38,6 +38,7 @@ const prompt = ai.definePrompt({
 - DO NOT add new content or information.
 - DO NOT perform any markdown formatting (like adding headings, lists, or code blocks).
 - Your job is only doing grammatical fixes. Nothing else.
+- If you see a sentence that is vague and gramatically incorrect fix it.
 
 Return only the corrected text.
 
